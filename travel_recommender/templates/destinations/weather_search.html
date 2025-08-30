@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Weather Search{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white h3">Check the Weather Anywhere</div>
+                <div class="card-body">
+                    <form method="get" class="mb-4">
+                        <div class="row g-3">
+                            <div class="col-sm">
+                                {{ form.city|as_crispy_field }}
+                            </div>
+                            <div class="col-sm">
+                                {{ form.country|as_crispy_field }}
+                            </div>
+                            <div class="col-sm-auto d-flex align-items-end pb-3">
+                                <button type="submit" class="btn btn-primary">Search</button>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    {% if weather_data %}
+                    <hr>
+                    <h3 class="text-center mb-3">Weather in {{ form.cleaned_data.city|title }}{% if form.cleaned_data.country %}, {{ form.cleaned_data.country|upper }}{% endif %}</h3>
+                    <div class="d-flex justify-content-center align-items-center mt-3">
+                        <img src="http://openweathermap.org/img/w/{{ weather_data.icon }}.png" alt="Weather icon" style="width: 100px; height: 100px;">
+                        <div class="ms-4">
+                            <h2 class="mb-0">{{ weather_data.weather }}</h2>
+                            <p class="display-4 mb-0">{{ weather_data.temperature|floatformat:0 }}°C</p>
+                        </div>
+                    </div>
+                    <div class="row text-center mt-4">
+                        <div class="col"><strong>Humidity</strong><p>{{ weather_data.humidity }}%</p></div>
+                        <div class="col"><strong>Wind Speed</strong><p>{{ weather_data.wind_speed }} m/s</p></div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

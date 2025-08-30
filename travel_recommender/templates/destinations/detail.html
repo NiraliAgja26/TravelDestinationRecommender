@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}{{ destination.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <img src="{{ destination.get_image_url }}" class="card-img-top destination-detail-img" alt="Image of {{ destination.name }}">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <h1 class="card-title mb-1">{{ destination.name }}, {{ destination.country }}</h1>
+                    </div>
+                    {% if user.is_authenticated %}
+                    <div class="ms-3 flex-shrink-0">
+                        <form id="favorite-form" action="{% url 'destinations:toggle_favorite' destination.pk %}" method="post" style="display: inline;">
+                            {% csrf_token %}
+                            <button id="favorite-btn" type="submit" class="btn {% if is_favorite %}btn-danger{% else %}btn-outline-danger{% endif %}" style="z-index: 999; position: relative;">
+                                <i class="bi bi-heart-fill"></i> {% if is_favorite %}Favorited{% else %}Like{% endif %}
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="mb-3">
+                    <span class="badge bg-primary">{{ destination.get_category_display }}</span>
+                    <span class="badge bg-success">{{ destination.get_budget_display }}</span>
+                    <span class="badge bg-info text-dark">{{ destination.get_best_season_display }}</span>
+                </div>
+                <div class="mb-3 d-flex align-items-center">
+                    <i class="bi bi-star-fill text-warning me-1"></i>
+                    <strong>{{ destination.rating|floatformat:1 }}</strong>
+                    <span class="ms-2 text-muted">({{ destination.reviews.count }} review{{ destination.reviews.count|pluralize }})</span>
+                </div>
+                <p class="card-text">{{ destination.description }}</p>
+                
+                <h5 class="mt-4">Activities</h5>
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    {% for activity in destination.get_activities_list %}
+                    <span class="badge bg-secondary">{{ activity }}</span>
+                    {% empty %}
+                    <p class="text-muted">No activities listed.</p>
+                    {% endfor %}
+                </div>
+
+                <hr class="my-4">
+
+                <!-- Weather Information Section -->
+                <h5 class="mb-3">Weather Information</h5>
+                {% if weather_info %}
+                <div class="d-flex align-items-center">
+                    {% if weather_info.icon %}
+                    <img src="https://openweathermap.org/img/w/{{ weather_info.icon }}.png" alt="Weather icon">
+                    {% endif %}
+                    <div class="ms-3">
+                        <h6 class="mb-0 fw-bold">{{ weather_info.current_weather }}</h6>
+                        <p class="mb-0">Temperature: {{ weather_info.temperature }}°C</p>
+                        <small class="text-muted">Last updated: {{ weather_info.last_updated|timesince }} ago</small>
+                    </div>
+                </div>
+                {% else %}
+                <p>Weather information not available at the moment.</p>
+                {% endif %}
+
+                <hr class="my-4">
+
+                <!-- Reviews Section -->
+                <h5 class="mb-3">Reviews</h5>
+                {% if user.is_authenticated %}
+                <h6>Add Your Review</h6>
+                <form method="post">
+                    {% csrf_token %}
+                    {{ review_form|crispy }}
+                    <button type="submit" class="btn btn-primary mt-2">Submit Review</button>
+                </form>
+                <hr class="my-4">
+                {% endif %}
+                {% for review in reviews %}
+                <div class="d-flex mb-3">
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-person-circle fs-3 text-muted"></i>
+                    </div>
+                    <div class="ms-3 flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-baseline">
+                            <h6 class="mb-0">{{ review.user.username }}</h6>
+                            <small class="text-muted">{{ review.created_at|timesince }} ago</small>
+                        </div>
+                        <p class="mb-1 mt-1">{{ review.comment }}</p>
+                    </div>
+                </div>
+                {% if not forloop.last %}<hr class="my-3">{% endif %}
+                {% empty %}
+                <p>No reviews yet. Be the first to review!</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>    
+    <div class="col-md-4">
+        <div class="position-sticky" style="top: 1.5rem;">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Travel Information</h5>
+                </div>
+                <div class="card-body">
+                    <h5>Best Time to Visit</h5>
+                    <p>{{ destination.get_best_season_display }}</p>
+                    
+                    <h5>Budget Level</h5>
+                    <p>{{ destination.get_budget_display }}</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Similar Destinations</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for similar in similar_destinations %}
+                    <a href="{% url 'destinations:detail' similar.pk %}" class="list-group-item list-group-item-action">
+                        {{ similar.name }}, {{ similar.country }}
+                    </a>
+                    {% empty %}
+                    <div class="list-group-item">No similar destinations found.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('favorite-form');
+    const btn = document.getElementById('favorite-btn');
+    
+    if (form && btn) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.is_favorite) {
+                    btn.className = 'btn btn-danger';
+                    btn.innerHTML = '<i class="bi bi-heart-fill"></i> <span class="d-none d-md-inline">Favorited</span>';
+                } else {
+                    btn.className = 'btn btn-outline-danger';
+                    btn.innerHTML = '<i class="bi bi-heart-fill"></i> <span class="d-none d-md-inline">Add to Favorites</span>';
+                }
+            })
+            .catch(() => {
+                form.submit();
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

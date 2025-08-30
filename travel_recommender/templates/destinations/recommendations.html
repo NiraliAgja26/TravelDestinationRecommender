@@ -1,0 +1,42 @@
+<!-- templates/destinations/recommendations.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Recommended Destinations For You</h2>
+    
+    {% if recommendations %}
+    <div class="alert alert-info mb-4">
+        Based on your preferences: 
+        <strong>{{ preferences.season }}</strong> season,
+        <strong>{{ preferences.budget }}</strong> budget,
+        <strong>{{ preferences.category }}</strong> category
+        {% if preferences.activities %} and activities: <strong>{{ preferences.activities }}</strong>{% endif %}
+    </div>
+
+    <div class="row">
+        {% for destination in recommendations %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">{{ destination.name }}, {{ destination.country }}</h5>
+                    <p class="card-text">{{ destination.description|truncatewords:20 }}</p>
+                    <div class="mb-2 d-flex align-items-center">
+                        <i class="bi bi-star-fill text-warning me-1"></i>
+                        <strong>{{ destination.rating|floatformat:1 }}</strong>
+                        <span class="ms-2 text-muted">({{ destination.reviews.count }} review{{ destination.reviews.count|pluralize }})</span>
+                    </div>
+                    <a href="{% url 'destinations:detail' destination.pk %}" class="btn btn-primary mt-auto">View Details</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-warning">
+        No destinations match your preferences. Try adjusting your criteria.
+        <a href="{% url 'destinations:get_recommendations' %}" class="alert-link">Go back to preferences</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

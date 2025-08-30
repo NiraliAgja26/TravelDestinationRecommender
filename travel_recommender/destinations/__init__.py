@@ -1,0 +1,1 @@
+# This file makes the 'destinations' directory a Python package.

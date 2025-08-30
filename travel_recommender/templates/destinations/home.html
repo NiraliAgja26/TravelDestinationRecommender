@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="hero-section text-white py-5">
+    <div class="container text-center">
+        <h1 class="display-4">Discover Your Perfect Destination</h1>
+        <p class="lead">Get personalized travel recommendations based on your preferences</p>
+        <a href="{% url 'destinations:get_recommendations' %}" class="btn btn-light btn-lg mt-3">Get Recommendations</a>
+    </div>
+</div>
+
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Featured Destinations</h2>
+    <div class="row">
+        {% for destination in featured_destinations %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-img-container">
+                    <div class="loading-spinner"></div>
+                    <img src="{{ destination.get_image_url }}" class="card-img-top" alt="Image of {{ destination.name }}" onload="this.classList.add('loaded'); this.parentElement.querySelector('.loading-spinner').style.display='none';">
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ destination.name }}, {{ destination.country }}</h5>
+                    <p class="card-text">{{ destination.description|truncatewords:20 }}</p>
+                    <div class="mb-2 d-flex align-items-center">
+                        <span class="ms-2 small text-muted">{{ destination.rating|floatformat:1 }}</span>
+                    </div>
+                    <a href="{% url 'destinations:detail' destination.pk %}" class="btn btn-primary">View Details</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
